@@ -44,7 +44,7 @@ jobs:
         run: tar -C stage -czf "securebuild-${{ github.ref_name }}-linux-x86_64.tar.gz" .
 
       - name: Upload release package
-        uses: actions/upload-artifact@c6a366c94c3e0affe28c06c8df20a878f24da3cf
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
         with:
           name: release-package-${{ github.run_id }}-${{ github.run_attempt }}
           path: securebuild-${{ github.ref_name }}-linux-x86_64.tar.gz
@@ -59,7 +59,7 @@ jobs:
           docker save securebuild:${{ github.ref_name }} -o release-image/securebuild-image.tar
 
       - name: Upload release image
-        uses: actions/upload-artifact@c6a366c94c3e0affe28c06c8df20a878f24da3cf
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
         with:
           name: release-image-${{ github.run_id }}-${{ github.run_attempt }}
           path: release-image/securebuild-image.tar
@@ -115,7 +115,7 @@ jobs:
           upload-release-assets: false
 
       - name: Upload gate artifacts
-        uses: actions/upload-artifact@c6a366c94c3e0affe28c06c8df20a878f24da3cf
+        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
         with:
           name: release-security-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
