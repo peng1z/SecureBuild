@@ -1,8 +1,8 @@
 # SecureBuild
 
-[![CI](https://img.shields.io/github/actions/workflow/status/peng/SecureBuild/ci.yml?branch=main)](https://github.com/peng/SecureBuild/actions/workflows/ci.yml)
-[![Security](https://img.shields.io/github/actions/workflow/status/peng/SecureBuild/security.yml?branch=main)](https://github.com/peng/SecureBuild/actions/workflows/security.yml)
-[![License](https://img.shields.io/github/license/peng/SecureBuild)](./LICENSE)
+[![CI](https://img.shields.io/github/actions/workflow/status/peng1z/SecureBuild/ci.yml?branch=main)](https://github.com/peng1z/SecureBuild/actions/workflows/ci.yml)
+[![Security](https://img.shields.io/github/actions/workflow/status/peng1z/SecureBuild/security.yml?branch=main)](https://github.com/peng1z/SecureBuild/actions/workflows/security.yml)
+[![License](https://img.shields.io/github/license/peng1z/SecureBuild)](./LICENSE)
 
 Production-grade CMake-based C++ library with a security-hardened CI/CD pipeline.
 
@@ -59,8 +59,8 @@ docker build -f docker/Dockerfile --target release -t securebuild:latest .
 docker tag securebuild:latest securebuild:v0.1.0
 ```
 
-On tagged releases, the workflow publishes both `ghcr.io/peng/securebuild:v0.1.0` and
-`ghcr.io/peng/securebuild:latest`.
+On tagged releases, the workflow publishes both `ghcr.io/peng1z/securebuild:v0.1.0` and
+`ghcr.io/peng1z/securebuild:latest`.
 
 ## Security Practices
 
