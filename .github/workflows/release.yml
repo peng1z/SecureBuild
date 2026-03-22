@@ -46,7 +46,7 @@ jobs:
       - name: Upload release package
         uses: actions/upload-artifact@c6a366c94c3e0affe28c06c8df20a878f24da3cf
         with:
-          name: release-package
+          name: release-package-${{ github.run_id }}-${{ github.run_attempt }}
           path: securebuild-${{ github.ref_name }}-linux-x86_64.tar.gz
           if-no-files-found: error
 
@@ -61,7 +61,7 @@ jobs:
       - name: Upload release image
         uses: actions/upload-artifact@c6a366c94c3e0affe28c06c8df20a878f24da3cf
         with:
-          name: release-image
+          name: release-image-${{ github.run_id }}-${{ github.run_attempt }}
           path: release-image/securebuild-image.tar
           if-no-files-found: error
 
@@ -79,7 +79,7 @@ jobs:
       - name: Download release image
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: release-image
+          name: release-image-${{ github.run_id }}-${{ github.run_attempt }}
           path: artifacts/release-image
 
       - name: Load release image
@@ -117,7 +117,7 @@ jobs:
       - name: Upload gate artifacts
         uses: actions/upload-artifact@c6a366c94c3e0affe28c06c8df20a878f24da3cf
         with:
-          name: release-security
+          name: release-security-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             sbom.spdx.json
             sbom.cyclonedx.json
@@ -137,19 +137,19 @@ jobs:
       - name: Download release package
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: release-package
+          name: release-package-${{ github.run_id }}-${{ github.run_attempt }}
           path: artifacts/release-package
 
       - name: Download security artifacts
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: release-security
+          name: release-security-${{ github.run_id }}-${{ github.run_attempt }}
           path: artifacts/release-security
 
       - name: Download release image
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
-          name: release-image
+          name: release-image-${{ github.run_id }}-${{ github.run_attempt }}
           path: artifacts/release-image
 
       - name: Load release image
