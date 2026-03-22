@@ -24,24 +24,20 @@ jobs:
       - name: Build release image
         run: docker build -f docker/Dockerfile --target release -t securebuild:scan .
 
-      - name: Install Trivy
-        run: |
-          curl -fsSL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b "${HOME}/.local/bin"
-          echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
-
       - name: Scan image
-        run: |
-          trivy image \
-            --scanners vuln \
-            --severity CRITICAL \
-            --ignore-unfixed \
-            --format sarif \
-            --output trivy.sarif \
-            --exit-code 1 \
-            securebuild:scan
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
+        with:
+          scan-type: image
+          image-ref: securebuild:scan
+          format: sarif
+          output: trivy.sarif
+          ignore-unfixed: true
+          severity: CRITICAL
+          exit-code: '1'
+          vuln-type: os,library
 
       - name: Upload SARIF
-        if: always()
+        if: always() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
         uses: github/codeql-action/upload-sarif@38697555549f1db7851b81482ff19f1fa5c4fedc
         with:
           sarif_file: trivy.sarif
@@ -65,15 +61,23 @@ jobs:
       - name: Build release image
         run: docker build -f docker/Dockerfile --target release -t securebuild:sbom .
 
-      - name: Install Syft
-        run: |
-          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b "${HOME}/.local/bin"
-          echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
-
       - name: Generate SPDX and CycloneDX SBOMs
-        run: |
-          syft packages docker:securebuild:sbom -o spdx-json=sbom.spdx.json
-          syft packages docker:securebuild:sbom -o cyclonedx-json=sbom.cyclonedx.json
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610
+        with:
+          image: securebuild:sbom
+          format: spdx-json
+          output-file: sbom.spdx.json
+          upload-artifact: false
+          upload-release-assets: false
+
+      - name: Generate CycloneDX SBOM
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610
+        with:
+          image: securebuild:sbom
+          format: cyclonedx-json
+          output-file: sbom.cyclonedx.json
+          upload-artifact: false
+          upload-release-assets: false
 
       - name: Upload SBOM artifact
         uses: actions/upload-artifact@c6a366c94c3e0affe28c06c8df20a878f24da3cf

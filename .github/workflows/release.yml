@@ -50,6 +50,21 @@ jobs:
           path: securebuild-${{ github.ref_name }}-linux-x86_64.tar.gz
           if-no-files-found: error
 
+      - name: Build release image
+        run: docker build -f docker/Dockerfile --target release -t securebuild:${{ github.ref_name }} .
+
+      - name: Save release image
+        run: |
+          mkdir -p release-image
+          docker save securebuild:${{ github.ref_name }} -o release-image/securebuild-image.tar
+
+      - name: Upload release image
+        uses: actions/upload-artifact@c6a366c94c3e0affe28c06c8df20a878f24da3cf
+        with:
+          name: release-image
+          path: release-image/securebuild-image.tar
+          if-no-files-found: error
+
   security-gate:
     name: Security gate
     runs-on: ubuntu-22.04
@@ -61,29 +76,43 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Build release image
-        run: docker build -f docker/Dockerfile --target release -t securebuild:release .
+      - name: Download release image
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: release-image
+          path: artifacts/release-image
 
-      - name: Install Trivy
-        run: |
-          curl -fsSL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b "${HOME}/.local/bin"
-          echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
+      - name: Load release image
+        run: docker load -i artifacts/release-image/securebuild-image.tar
 
       - name: Fail on critical CVEs
-        run: |
-          trivy image \
-            --scanners vuln \
-            --severity CRITICAL \
-            --ignore-unfixed \
-            --exit-code 1 \
-            securebuild:release
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
+        with:
+          scan-type: image
+          image-ref: securebuild:${{ github.ref_name }}
+          format: table
+          ignore-unfixed: true
+          severity: CRITICAL
+          exit-code: '1'
+          vuln-type: os,library
 
       - name: Generate final SBOM
-        run: |
-          curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b "${HOME}/.local/bin"
-          echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
-          syft packages docker:securebuild:release -o spdx-json=sbom.spdx.json
-          syft packages docker:securebuild:release -o cyclonedx-json=sbom.cyclonedx.json
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610
+        with:
+          image: securebuild:${{ github.ref_name }}
+          format: spdx-json
+          output-file: sbom.spdx.json
+          upload-artifact: false
+          upload-release-assets: false
+
+      - name: Generate CycloneDX SBOM
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610
+        with:
+          image: securebuild:${{ github.ref_name }}
+          format: cyclonedx-json
+          output-file: sbom.cyclonedx.json
+          upload-artifact: false
+          upload-release-assets: false
 
       - name: Upload gate artifacts
         uses: actions/upload-artifact@c6a366c94c3e0affe28c06c8df20a878f24da3cf
@@ -109,16 +138,22 @@ jobs:
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           name: release-package
-          path: artifacts
+          path: artifacts/release-package
 
       - name: Download security artifacts
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
         with:
           name: release-security
-          path: artifacts
+          path: artifacts/release-security
 
-      - name: Build release image
-        run: docker build -f docker/Dockerfile --target release -t securebuild:${{ github.ref_name }} .
+      - name: Download release image
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
+        with:
+          name: release-image
+          path: artifacts/release-image
+
+      - name: Load release image
+        run: docker load -i artifacts/release-image/securebuild-image.tar
 
       - name: Log in to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin

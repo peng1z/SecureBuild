@@ -1,5 +1,44 @@
+# Build outputs
 /build/
+/build-*/
+/cmake-build-*/
 /artifacts/
+/install/
+/dist/
+
+# Generated metadata
+compile_commands.json
+CTestTestfile.cmake
+cmake_install.cmake
+Makefile
+*.ninja
+build.ninja
+rules.ninja
+
+# Logs and archives
 *.log
+*.tar
 *.tar.gz
+*.zip
+
+# Local environment and secrets
+.env
+.env.*
+*.env
+*.local
+.secrets/
+secrets/
+credentials/
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+
+# Editor and OS files
 .DS_Store
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
