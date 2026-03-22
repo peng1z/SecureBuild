@@ -46,7 +46,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@c6a366c94c3e0affe28c06c8df20a878f24da3cf
         with:
-          name: trivysarifreport
+          name: securebuild-trivy-sarif
           path: trivy.sarif
           if-no-files-found: warn
 
@@ -82,7 +82,7 @@ jobs:
       - name: Upload SBOM artifact
         uses: actions/upload-artifact@c6a366c94c3e0affe28c06c8df20a878f24da3cf
         with:
-          name: sbomartifacts
+          name: securebuild-sbom
           path: |
             sbom.spdx.json
             sbom.cyclonedx.json
@@ -112,6 +112,6 @@ jobs:
         if: always()
         uses: actions/upload-artifact@c6a366c94c3e0affe28c06c8df20a878f24da3cf
         with:
-          name: trivyfilesystemreport
+          name: securebuild-trivy-fs
           path: trivy-fs-report.txt
           if-no-files-found: warn
