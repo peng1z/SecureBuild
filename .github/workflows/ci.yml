@@ -41,14 +41,6 @@ jobs:
           set -euo pipefail
           ctest --test-dir build --output-on-failure | tee build/ctest.log
 
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@c6a366c94c3e0affe28c06c8df20a878f24da3cf
-        with:
-          name: test-results-${{ matrix.os }}-${{ github.run_id }}-${{ github.run_attempt }}
-          path: build/ctest.log
-          if-no-files-found: warn
-
   docker-build:
     name: Docker build and push
     runs-on: ubuntu-22.04
