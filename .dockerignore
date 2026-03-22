@@ -1,0 +1,7 @@
+.git
+.github
+build
+artifacts
+*.log
+*.tar.gz
+.DS_Store

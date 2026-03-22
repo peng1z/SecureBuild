@@ -1,0 +1,81 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-and-test:
+    name: Build and test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, ubuntu-20.04]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends build-essential cmake ninja-build
+
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DBUILD_TESTS=ON -DBUILD_SHARED_LIBS=OFF -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --parallel
+
+      - name: Test
+        run: |
+          set -euo pipefail
+          ctest --test-dir build --output-on-failure | tee build/ctest.log
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@c6a366c94c3e0affe28c06c8df20a878f24da3cf
+        with:
+          name: test-results-${{ matrix.os }}
+          path: build/ctest.log
+          if-no-files-found: warn
+
+  docker-build:
+    name: Docker build and push
+    runs-on: ubuntu-22.04
+    needs: build-and-test
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+
+      - name: Build test image
+        run: docker build -f docker/Dockerfile --target test -t securebuild:test .
+
+      - name: Run container tests
+        run: docker run --rm securebuild:test
+
+      - name: Build release image
+        run: |
+          docker build -f docker/Dockerfile --target release -t securebuild:latest .
+          docker tag securebuild:latest ghcr.io/${{ github.repository_owner }}/securebuild:latest
+          docker tag securebuild:latest ghcr.io/${{ github.repository_owner }}/securebuild:${{ github.sha }}
+
+      - name: Log in to GHCR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Push images
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          docker push ghcr.io/${{ github.repository_owner }}/securebuild:latest
+          docker push ghcr.io/${{ github.repository_owner }}/securebuild:${{ github.sha }}
