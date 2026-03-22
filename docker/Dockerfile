@@ -8,6 +8,7 @@ RUN apt-get update \
     ca-certificates \
     cmake \
     git \
+    libgtest-dev \
     ninja-build \
     pkg-config \
   && rm -rf /var/lib/apt/lists/*

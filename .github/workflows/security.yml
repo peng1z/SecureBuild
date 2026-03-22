@@ -46,7 +46,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@c6a366c94c3e0affe28c06c8df20a878f24da3cf
         with:
-          name: trivy-vulnerability-report
+          name: trivysarifreport
           path: trivy.sarif
           if-no-files-found: warn
 
@@ -82,7 +82,7 @@ jobs:
       - name: Upload SBOM artifact
         uses: actions/upload-artifact@c6a366c94c3e0affe28c06c8df20a878f24da3cf
         with:
-          name: sbom
+          name: sbomartifacts
           path: |
             sbom.spdx.json
             sbom.cyclonedx.json
@@ -96,25 +96,22 @@ jobs:
       - name: Checkout
         uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
 
-      - name: Install Trivy
-        run: |
-          curl -fsSL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b "${HOME}/.local/bin"
-          echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
-
       - name: Scan repository filesystem
-        run: |
-          trivy fs \
-            --scanners vuln \
-            --severity HIGH,CRITICAL \
-            --ignore-unfixed \
-            --format table \
-            --output trivy-fs-report.txt \
-            .
+        uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: table
+          output: trivy-fs-report.txt
+          ignore-unfixed: true
+          severity: HIGH,CRITICAL
+          exit-code: '0'
+          vuln-type: os,library
 
       - name: Upload repository report
         if: always()
         uses: actions/upload-artifact@c6a366c94c3e0affe28c06c8df20a878f24da3cf
         with:
-          name: trivy-filesystem-report
+          name: trivyfilesystemreport
           path: trivy-fs-report.txt
           if-no-files-found: warn
