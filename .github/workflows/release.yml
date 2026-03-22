@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   build-release:
-    name: Build release
+    name: Build, scan, and publish release
     runs-on: ubuntu-22.04
 
     steps:
@@ -43,47 +43,8 @@ jobs:
       - name: Package release
         run: tar -C stage -czf "securebuild-${{ github.ref_name }}-linux-x86_64.tar.gz" .
 
-      - name: Upload release package
-        uses: actions/upload-artifact@c6a366c94c3e0affe28c06c8df20a878f24da3cf
-        with:
-          name: release-package
-          path: securebuild-${{ github.ref_name }}-linux-x86_64.tar.gz
-          if-no-files-found: error
-
       - name: Build release image
         run: docker build -f docker/Dockerfile --target release -t securebuild:${{ github.ref_name }} .
-
-      - name: Save release image
-        run: |
-          mkdir -p release-image
-          docker save securebuild:${{ github.ref_name }} -o release-image/securebuild-image.tar
-
-      - name: Upload release image
-        uses: actions/upload-artifact@c6a366c94c3e0affe28c06c8df20a878f24da3cf
-        with:
-          name: release-image
-          path: release-image/securebuild-image.tar
-          if-no-files-found: error
-
-  security-gate:
-    name: Security gate
-    runs-on: ubuntu-22.04
-    needs: build-release
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-        with:
-          fetch-depth: 0
-
-      - name: Download release image
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
-        with:
-          name: release-image
-          path: artifacts/release-image
-
-      - name: Load release image
-        run: docker load -i artifacts/release-image/securebuild-image.tar
 
       - name: Fail on critical CVEs
         uses: aquasecurity/trivy-action@57a97c7e7821a5776cebc9bb87c984fa69cba8f1
@@ -114,47 +75,6 @@ jobs:
           upload-artifact: false
           upload-release-assets: false
 
-      - name: Upload gate artifacts
-        uses: actions/upload-artifact@c6a366c94c3e0affe28c06c8df20a878f24da3cf
-        with:
-          name: release-security
-          path: |
-            sbom.spdx.json
-            sbom.cyclonedx.json
-          if-no-files-found: error
-
-  publish:
-    name: Publish release
-    runs-on: ubuntu-22.04
-    needs: [build-release, security-gate]
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-        with:
-          fetch-depth: 0
-
-      - name: Download release package
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
-        with:
-          name: release-package
-          path: artifacts/release-package
-
-      - name: Download security artifacts
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
-        with:
-          name: release-security
-          path: artifacts/release-security
-
-      - name: Download release image
-        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c
-        with:
-          name: release-image
-          path: artifacts/release-image
-
-      - name: Load release image
-        run: docker load -i artifacts/release-image/securebuild-image.tar
-
       - name: Log in to GHCR
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
 
@@ -179,8 +99,8 @@ jobs:
         with:
           body_path: release-notes.md
           files: |
-            artifacts/release-package/securebuild-${{ github.ref_name }}-linux-x86_64.tar.gz
-            artifacts/release-security/sbom.spdx.json
-            artifacts/release-security/sbom.cyclonedx.json
+            securebuild-${{ github.ref_name }}-linux-x86_64.tar.gz
+            sbom.spdx.json
+            sbom.cyclonedx.json
           generate_release_notes: false
           fail_on_unmatched_files: true
